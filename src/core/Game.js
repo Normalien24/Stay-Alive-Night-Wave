@@ -82,7 +82,15 @@ export class Game {
 
     this._hud     = new HUD()
     this._shop    = new ShopPanel(this._economy, this._player)
-    this._mobile  = new MobileControls(this._input)
+    this._mobile  = new MobileControls(this._input, {
+      harvest:      () => this._player._tryHarvest(this._world.resourceNodes),
+      toggleBuild:  () => this._toggleBuildMode(),
+      toggleShop:   () => this._toggleShop(),
+      toggleWeapon: () => {
+        this._player.equippedWeapon =
+          this._player.equippedWeapon === 'melee' ? 'ranged' : 'melee'
+      },
+    })
 
     this._bullets     = []
     this._projectiles = []
@@ -187,17 +195,7 @@ export class Game {
     // Toggle build mode with B key
     if (this._input.wasPressed('KeyB')) {
       this._input.consumePress('KeyB')
-      if (this._dayNight.phase === 'night') {
-        this._hud._showAlert('Cannot build at night!', 1.5)
-      } else if (this._buildMode) {
-        this._buildMode = false
-        this._buildingMgr.exitBuildMode()
-        this._hud.showBuildMode(false)
-      } else {
-        this._buildMode = true
-        this._buildCamera.activate()
-        this._hud.showBuildMode(true)
-      }
+      this._toggleBuildMode()
     }
 
     if (this._buildMode && this._input.wasPressed('Escape')) {
@@ -210,9 +208,7 @@ export class Game {
     // Shop toggle on F
     if (this._input.wasPressed('KeyF')) {
       this._input.consumePress('KeyF')
-      const panel = document.getElementById('shop-panel')
-      const showing = panel?.style.display === 'block'
-      this._hud.showShop(!showing)
+      this._toggleShop()
     }
 
     // Player ranged attack on left click (not in build mode)
@@ -290,6 +286,28 @@ export class Game {
 
     // HUD
     this._hud.update(this._player, this._dayNight, this._waveManager, delta)
+  }
+
+  _toggleBuildMode() {
+    if (this._dayNight.phase === 'night') {
+      this._hud._showAlert('Cannot build at night!', 1.5)
+      return
+    }
+    if (this._buildMode) {
+      this._buildMode = false
+      this._buildingMgr.exitBuildMode()
+      this._hud.showBuildMode(false)
+    } else {
+      this._buildMode = true
+      this._buildCamera.activate()
+      this._hud.showBuildMode(true)
+    }
+  }
+
+  _toggleShop() {
+    const panel = document.getElementById('shop-panel')
+    const showing = panel?.style.display === 'block'
+    this._hud.showShop(!showing)
   }
 
   _resize() {
