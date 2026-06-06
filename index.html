@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stay Alive Night Wave</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+
+    #canvas { position: fixed; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; }
+
+    /* ── HUD ─────────────────────────────────────────── */
+    #hud {
+      position: fixed; inset: 0; z-index: 10;
+      pointer-events: none;
+    }
+
+    #hud-top-left {
+      position: absolute; top: 14px; left: 14px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    #hud-health-bar {
+      width: 200px; height: 16px;
+      background: #300; border-radius: 8px; overflow: hidden;
+      border: 1px solid #555;
+    }
+    #hud-health-fill { height: 100%; width: 100%; background: #22cc44; transition: width 0.2s, background 0.2s; }
+    #hud-health-txt  { color: #fff; font-size: 11px; text-align: center; line-height: 16px; position: absolute; width: 200px; }
+
+    .hud-row { display: flex; gap: 14px; }
+    .hud-stat { color: #ddd; font-size: 13px; background: rgba(0,0,0,0.55); padding: 3px 8px; border-radius: 5px; }
+    .hud-stat span { color: #fff; font-weight: bold; }
+
+    #hud-top-right {
+      position: absolute; top: 14px; right: 14px;
+      text-align: right; display: flex; flex-direction: column; gap: 5px; align-items: flex-end;
+    }
+    #hud-day   { color: #ffe; font-size: 18px; font-weight: bold; text-shadow: 0 0 6px #000; }
+    #hud-phase { color: #ffee44; font-size: 14px; }
+    #hud-timer { color: #fff; font-size: 14px; }
+    #hud-wave  { color: #ff6666; font-size: 13px; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 5px; display: none; }
+
+    #hud-weapon {
+      position: absolute; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      color: #fff; font-size: 13px;
+      background: rgba(0,0,0,0.5); padding: 4px 14px; border-radius: 20px;
+    }
+
+    #hud-alert {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff; font-size: 22px; font-weight: bold;
+      text-shadow: 0 0 12px #000, 0 2px 4px #000;
+      background: rgba(0,0,0,0.45); padding: 10px 26px; border-radius: 10px;
+      display: none; pointer-events: none; text-align: center;
+    }
+
+    #hud-controls {
+      position: absolute; bottom: 14px; right: 14px;
+      color: #999; font-size: 11px; line-height: 1.6;
+      background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 6px;
+    }
+
+    /* ── Build Panel ──────────────────────────────────── */
+    #build-panel {
+      position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+      z-index: 20; display: none; gap: 10px;
+      background: rgba(0,0,0,0.75); border-radius: 12px; padding: 12px 18px;
+      border: 1px solid #555;
+    }
+    #build-panel button {
+      padding: 10px 18px; border: none; border-radius: 8px;
+      background: #334; color: #ddd; font-size: 13px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    #build-panel button:hover { background: #558; }
+    .build-cost { font-size: 10px; color: #aaa; display: block; margin-top: 2px; }
+    #build-mode-label {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #88ff88; font-size: 14px; pointer-events: none;
+      background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 8px;
+      display: none; z-index: 20;
+    }
+
+    /* ── Shop Panel ───────────────────────────────────── */
+    #shop-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 30; display: none;
+      background: rgba(10,10,30,0.95); border: 1px solid #446;
+      border-radius: 14px; padding: 20px 24px; min-width: 320px; color: #ddd;
+    }
+    #shop-panel h2 { color: #ffdd44; margin-bottom: 14px; font-size: 18px; }
+    #shop-panel h3 { color: #aaddff; font-size: 13px; margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+    #shop-resources, #shop-upgrades, #shop-tower { display: flex; flex-wrap: wrap; gap: 8px; }
+    .shop-btn {
+      padding: 8px 12px; border: 1px solid #446; border-radius: 7px;
+      background: #1a1a3a; color: #ddd; font-size: 12px; cursor: pointer; text-align: center;
+      transition: background 0.15s;
+    }
+    .shop-btn:hover { background: #2a2a5a; }
+    .cost { color: #ffdd44; font-size: 11px; }
+    #shop-close {
+      margin-top: 14px; width: 100%; padding: 8px; border: 1px solid #446;
+      border-radius: 7px; background: #2a1a1a; color: #ddd; cursor: pointer;
+    }
+
+    /* ── Main Menu ────────────────────────────────────── */
+    #main-menu {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #0a1a0a 0%, #000 100%);
+      color: #fff;
+    }
+    #main-menu h1 { font-size: 42px; color: #88ff66; text-shadow: 0 0 20px #44aa22; margin-bottom: 10px; letter-spacing: 2px; }
+    #main-menu p  { color: #aaa; margin-bottom: 30px; font-size: 14px; }
+    #start-btn {
+      padding: 14px 44px; font-size: 18px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #22aa44, #117733);
+      color: #fff; cursor: pointer; font-weight: bold;
+      box-shadow: 0 4px 20px rgba(34,170,68,0.5);
+      transition: transform 0.1s;
+    }
+    #start-btn:hover { transform: scale(1.05); }
+    .menu-controls { color: #666; font-size: 12px; margin-top: 28px; line-height: 2; text-align: center; }
+
+    /* ── Game Over ────────────────────────────────────── */
+    #game-over {
+      position: fixed; inset: 0; z-index: 50; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.88); color: #fff;
+    }
+    #game-over h1 { font-size: 48px; color: #ff4444; margin-bottom: 12px; }
+    #go-day { color: #aaa; font-size: 16px; margin-bottom: 28px; }
+    #restart-btn {
+      padding: 12px 36px; font-size: 16px; border: none; border-radius: 8px;
+      background: #aa3333; color: #fff; cursor: pointer; font-weight: bold;
+    }
+    #restart-btn:hover { background: #cc4444; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="hud-top-left">
+      <div style="position:relative">
+        <div id="hud-health-bar"><div id="hud-health-fill"></div></div>
+        <div id="hud-health-txt">100/100</div>
+      </div>
+      <div class="hud-row">
+        <div class="hud-stat">🪵 <span id="hud-wood">0</span></div>
+        <div class="hud-stat">🪨 <span id="hud-stone">0</span></div>
+        <div class="hud-stat">⚙️ <span id="hud-metal">0</span></div>
+        <div class="hud-stat">💰 <span id="hud-gold">0</span></div>
+      </div>
+    </div>
+    <div id="hud-top-right">
+      <div id="hud-day">Day 1</div>
+      <div id="hud-phase">☀️ Day</div>
+      <div id="hud-timer">120s</div>
+      <div id="hud-wave">Zombies: 0</div>
+    </div>
+    <div id="hud-weapon">[2] ranged</div>
+    <div id="hud-alert"></div>
+    <div id="hud-controls">
+      WASD — Move<br>
+      LClick — Attack<br>
+      E — Harvest<br>
+      B — Build mode<br>
+      F — Shop<br>
+      1/2 — Melee/Ranged<br>
+      RMouse — Rotate cam
+    </div>
+  </div>
+
+  <!-- Build mode label -->
+  <div id="build-mode-label" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;color:#88ff88;font-size:14px;background:rgba(0,0,0,0.6);padding:5px 14px;border-radius:8px;display:none;pointer-events:none;">🏗 BUILD MODE — Click to place | B or Esc to exit</div>
+
+  <!-- Build Panel -->
+  <div id="build-panel">
+    <button data-build="wall">
+      🧱 Wall
+      <span class="build-cost">5🪵 3🪨</span>
+    </button>
+    <button data-build="tower">
+      🗼 Tower
+      <span class="build-cost">3🪵 5🪨 4⚙️</span>
+    </button>
+    <button data-build="trap">
+      ⚡ Trap
+      <span class="build-cost">4🪵 3⚙️</span>
+    </button>
+    <button id="build-exit" style="background:#442222;margin-left:10px">✕ Exit</button>
+  </div>
+
+  <!-- Shop Panel -->
+  <div id="shop-panel">
+    <h2>🏪 Shop</h2>
+    <h3>Resources</h3>
+    <div id="shop-resources"></div>
+    <h3>Player Upgrades</h3>
+    <div id="shop-upgrades"></div>
+    <h3>Selected Tower</h3>
+    <div id="shop-tower"><p style="color:#666;font-size:12px">No tower selected</p></div>
+    <button id="shop-close">Close (F)</button>
+  </div>
+
+  <!-- Main Menu -->
+  <div id="main-menu">
+    <h1>STAY ALIVE</h1>
+    <p>Survive the night. Build defenses. Kill zombies.</p>
+    <button id="start-btn">START GAME</button>
+    <div class="menu-controls">
+      WASD Move &nbsp;|&nbsp; Left Click Attack &nbsp;|&nbsp; E Harvest &nbsp;|&nbsp; B Build &nbsp;|&nbsp; F Shop
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="game-over">
+    <h1>GAME OVER</h1>
+    <div id="go-day">You survived 0 day(s)</div>
+    <button id="restart-btn">Play Again</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
