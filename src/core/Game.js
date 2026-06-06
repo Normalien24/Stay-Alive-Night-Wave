@@ -16,6 +16,7 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js'
 import { BuildCamera }      from '../camera/BuildCamera.js'
 import { HUD }              from '../ui/HUD.js'
 import { ShopPanel }        from '../ui/ShopPanel.js'
+import { MobileControls }  from '../ui/MobileControls.js'
 import { Bullet }           from '../projectiles/Bullet.js'
 
 export class Game {
@@ -79,8 +80,9 @@ export class Game {
     this._tpCamera    = new ThirdPersonCamera(this._camera)
     this._buildCamera = new BuildCamera(this._camera)
 
-    this._hud   = new HUD()
-    this._shop  = new ShopPanel(this._economy, this._player)
+    this._hud     = new HUD()
+    this._shop    = new ShopPanel(this._economy, this._player)
+    this._mobile  = new MobileControls(this._input)
 
     this._bullets     = []
     this._projectiles = []

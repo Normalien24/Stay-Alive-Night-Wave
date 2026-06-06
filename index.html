@@ -139,6 +139,63 @@
       background: #aa3333; color: #fff; cursor: pointer; font-weight: bold;
     }
     #restart-btn:hover { background: #cc4444; }
+
+    /* ── Mobile Controls ──────────────────────────── */
+    #ctrl-toggle {
+      position: fixed; top: 58px; right: 14px; z-index: 100;
+      padding: 6px 12px; border: 1px solid #446; border-radius: 6px;
+      background: rgba(10,10,30,0.85); color: #adf; font-size: 11px;
+      cursor: pointer; pointer-events: auto;
+    }
+
+    #mobile-ui {
+      position: fixed; inset: 0; z-index: 40;
+      pointer-events: none;
+    }
+
+    .stick-wrap {
+      position: absolute; left: 16px; bottom: 100px;
+      width: 130px; height: 130px;
+      pointer-events: auto;
+    }
+    .stick-base {
+      position: absolute; inset: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+    .stick-thumb {
+      position: absolute; top: 50%; left: 50%;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      border: 2px solid rgba(255,255,255,0.6);
+      transform: translate(-50%, -50%);
+      transition: transform 0.03s linear;
+    }
+
+    .action-btns {
+      position: absolute; right: 16px; bottom: 90px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .mobile-btn {
+      width: 54px; height: 54px; border-radius: 50%;
+      background: rgba(40,40,80,0.85);
+      border: 2px solid rgba(120,120,200,0.6);
+      color: #fff; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+      touch-action: manipulation; outline: none;
+      transition: background 0.1s;
+    }
+    .mobile-btn-big {
+      width: 70px; height: 70px; font-size: 24px;
+      background: rgba(160,30,30,0.85);
+      border-color: rgba(220,80,80,0.7);
+    }
+    .mobile-btn.pressed { background: rgba(80,80,160,0.95); }
+    .mobile-btn-big.pressed { background: rgba(220,50,50,0.95); }
   </style>
 </head>
 <body>
