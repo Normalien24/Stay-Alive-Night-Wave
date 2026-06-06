@@ -35,6 +35,7 @@ export class InputManager {
     window.addEventListener('contextmenu', e => e.preventDefault())
   }
 
+  // Call at START of frame — copies raw values only
   update() {
     this.mouseDelta.x = this._rawDelta.x
     this.mouseDelta.y = this._rawDelta.y
@@ -42,6 +43,10 @@ export class InputManager {
     this._rawDelta.x  = 0
     this._rawDelta.y  = 0
     this._rawScroll   = 0
+  }
+
+  // Call at END of frame — clears pressed/released so next frame starts clean
+  flush() {
     this._pressed.clear()
     this._released.clear()
     this._consumed.clear()

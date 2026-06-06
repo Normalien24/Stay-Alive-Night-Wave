@@ -171,10 +171,14 @@ export class Game {
     requestAnimationFrame(() => this._loop())
     const delta = Math.min(this._clock.getDelta(), 0.1)
 
-    if (this._state !== 'playing') return
+    if (this._state !== 'playing') {
+      this._input.flush()
+      return
+    }
 
     this._update(delta)
     this._renderer.render(this._scene, this._camera)
+    this._input.flush()  // clear pressed/released AFTER all logic has read them
   }
 
   _update(delta) {
